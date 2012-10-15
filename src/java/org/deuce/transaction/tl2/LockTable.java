@@ -55,6 +55,24 @@ public class LockTable {
 		return lock;
 	}
 	
+	
+	public static int checkLock(int lockIndex, int clock, byte[] contextLocks) {
+		int lock = locks.get(lockIndex);
+
+		if( clock < (lock & UNLOCK))
+			throw FAILURE_EXCEPTION;	
+		
+		if( (lock & LOCK) != 0){  //is already locked?
+			int selfLockIndex = lockIndex>>>DIVIDE_8;
+			byte selfLockByte = contextLocks[selfLockIndex];
+			byte selfLockBit = (byte)(1 << (lockIndex & MODULE_8));
+			if( (selfLockByte & selfLockBit) == 0) // check for self locking
+				throw FAILURE_EXCEPTION; // not self locked
+		}
+		
+		return lock;
+	}
+
 
 	public static void checkLock(int lockIndex, int clock, int expected) {
 		int lock = locks.get(lockIndex);
